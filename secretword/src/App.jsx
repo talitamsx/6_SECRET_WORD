@@ -19,6 +19,8 @@ const stages = [
   { id: 3, name: "end" },
 ];
 
+const guessesQty = 3
+
 function App() {
   const [gameStage, setGameStage] = useState(stages[0].name);
   const [words] = useState(wordsList);
@@ -29,7 +31,7 @@ function App() {
 
   const [guessedLetters, setGuessedLetters] = useState([]); //letras adivinhadas
   const [wrongLetters, setWrongLetters] = useState([]); //letras erradas
-  const [guesses, setGuesses] = useState(3); //tentativas do usuário
+  const [guesses, setGuesses] = useState(guessesQty); //tentativas do usuário
   const [score, setScore] = useState(0); //ponuação
 
   const pickWordAndCategory = () => {
@@ -78,12 +80,55 @@ function App() {
 
   // process the letter input
   const verifyLetter = (letter) => {
-    console.log(letter)
+    const normalizedLetter = letter.toUpperCase();
+
+    //verifica se letra já foi utilizada
+    if (
+      guessedLetters.includes(normalizedLetter) ||
+      wrongLetters.includes(normalizedLetter)
+    ) {
+      return;
+    }
+    // Adicona a letra adivinhada ou remove uma tentativa
+    // Se a letra estiver correta, adiciona a letra atualizando a lista de letras corretas
+
+    if (letters.includes(normalizedLetter)) {
+      setGuessedLetters((actualGuessedLetters) => [
+        ...actualGuessedLetters, // pega todos os elementos do array e adiciona mais um
+        normalizedLetter,
+      ]);
+    } else {
+      setWrongLetters((actualWrongLetters) => [
+        ...actualWrongLetters,
+        normalizedLetter,
+      ]);
+      //diminui qtde de alternativas
+      setGuesses((actualGuesses) => actualGuesses - 1);
+    }
+    //console.log(guessedLetters)
+    //console.log(wrongLetters)
   };
+  const clearLettersStates = () => {
+    setGuessedLetters([])
+    setWrongLetters([])
+  }
+
+  //monitora o número de tentativas e zera o jogo quando acaba as tentativas
+  useEffect(() => {
+    if (guesses <= 0) {
+      //reset all states
+      clearLettersStates()
+
+      setGameStage(stages[2].name);
+    }
+  }, [guesses]);
 
   // restart the game
   const retry = () => {
-    setGameStage(stages[0].name);
+    setScore(0)
+    setGuesses(guessesQty)
+
+    setGameStage(stages[0].name)
   };
 
   return (
@@ -91,9 +136,9 @@ function App() {
       {gameStage === "start" && <StartScreen startGame={startGame} />}
       {gameStage === "game" && (
         <Game
-        //Todos esses estados vão ser envoltos no jogo pq é ele que vai lidar (ñ gerenciar) com eles qdo forem alterados
-        //Game.jsx receberá esses estados em forma de props
-          verifyLetter={verifyLetter}          
+          //Todos esses estados vão ser envoltos no jogo pq é ele que vai lidar (ñ gerenciar) com eles qdo forem alterados
+          //Game.jsx receberá esses estados em forma de props
+          verifyLetter={verifyLetter}
           pickedWord={pickedWord}
           pickedCategory={pickedCategory}
           letters={letters}
